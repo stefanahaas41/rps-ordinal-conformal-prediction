@@ -1,4 +1,7 @@
+"""Naive CDF conformity score for ordinal conformal prediction."""
+
 from typing import Optional
+
 import numpy as np
 from mapie.conformity_scores.classification import BaseClassificationScore
 from mapie.conformity_scores.sets.utils import check_proba_normalized
@@ -8,9 +11,13 @@ from numpy.typing import NDArray
 
 
 class NaiveCDFScore(BaseClassificationScore):
-    """
-    Naive CDF score for ordinal conformal prediction.
-    Reference: Lu et al. (2022), MICCAI.
+    """Naive CDF conformity score for ordinal conformal prediction.
+
+    Reference
+    ---------
+    Lu, C., Angelopoulos, A. N., & Pomerantz, S. (2022, September).
+    Improving trustworthiness of AI disease severity rating in medical imaging with ordinal conformal prediction sets.
+    In International conference on medical image computing and computer-assisted intervention (pp. 545-554).
     """
 
     def __init__(self) -> None:
@@ -213,36 +220,19 @@ class NaiveCDFScore(BaseClassificationScore):
         NDArray
             Array of quantiles with respect to alpha_np.
         """
-        # n = len(conformity_scores)
         n_samples, n_classes, n_alpha = y_pred_proba.shape
-
-        # Initialize output
         prediction_sets = np.zeros((n_samples, n_classes, n_alpha), dtype=bool)
 
         if (estimator.cv == "prefit") or (agg_scores == "mean"):
-            # prediction_sets = np.less_equal(
-            #     (1 - y_pred_proba) - self.quantiles_, EPSILON
-            # )
-
-            # For each class, simulate it being the true label and compute RPS
             for q_idx, q in enumerate(self.quantiles_):
-                prediction_sets[:, :, q_idx] = self.cdf_naive_ordinal_prediction(y_pred_proba[:, :, q_idx], q)
-
+                prediction_sets[:, :, q_idx] = self.cdf_naive_ordinal_prediction(
+                    y_pred_proba[:, :, q_idx], q
+                )
 
         else:
-            pass
-            # TODO: Implement
-            # y_pred_included = np.less_equal(
-            #     (1 - y_pred_proba) - conformity_scores.ravel(), EPSILON
-            # ).sum(axis=2)
-            #
-            # prediction_sets = np.stack(
-            #     [
-            #         np.greater_equal(
-            #             y_pred_included - _alpha * (n - 1), -EPSILON
-            #         )
-            #         for _alpha in alpha_np
-            #     ], axis=2
-            # )
+            raise NotImplementedError(
+                "Naive CDF prediction sets are only supported for prefit or "
+                "mean aggregation."
+            )
 
         return prediction_sets

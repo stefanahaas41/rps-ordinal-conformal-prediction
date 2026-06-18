@@ -1,4 +1,7 @@
+"""Ranked Probability Score (RPS) conformity score for ordinal conformal prediction."""
+
 from typing import Optional
+
 import numpy as np
 from mapie._machine_precision import EPSILON
 from mapie.conformity_scores.classification import BaseClassificationScore
@@ -9,11 +12,19 @@ from numpy.typing import NDArray
 
 
 class RankedProbabilityScore(BaseClassificationScore):
-    """
-    Ranked Probability Score (RPS) for ordinal classification.
-    Reference:
-    Epstein, E. S. (1969). A scoring system for probability forecasts of ranked categories.
-    Bulletin of the American Meteorological Society.
+    """Ranked Probability Score (RPS) conformity score for ordinal classification.
+
+    The RPS, introduced by Epstein (1969), is a proper scoring rule for
+    probabilistic forecasts of ordered categories.  Unlike the Brier Score, it
+    penalises the cumulative-distribution distance between the forecast and
+    the observation, thereby rewarding predictions that are ordinally closer
+    to the true outcome.
+
+    Reference
+    ---------
+    Epstein, E. S. (1969). A scoring system for probability forecasts of
+    ranked categories. *Journal of Applied Meteorology and Climatology*,
+    8(6), 985–987. https://doi.org/10.1175/1520-0450(1969)008<0985:ASSFPF>2.0.CO;2
     """
 
     def __init__(self) -> None:
@@ -63,15 +74,6 @@ class RankedProbabilityScore(BaseClassificationScore):
 
         return conformity_scores
 
-        # Casting
-        # y_enc = cast(NDArray, y_enc)
-        #
-        # # Conformity scores
-        # conformity_scores = np.take_along_axis(
-        #     1 - y_pred, y_enc.reshape(-1, 1), axis=1
-        # )
-        #
-        # return conformity_scores
 
     def get_predictions(
             self,
@@ -204,16 +206,10 @@ class RankedProbabilityScore(BaseClassificationScore):
         NDArray
             Array of quantiles with respect to alpha_np.
         """
-        # n = len(conformity_scores)
         n_samples, n_classes, n_alpha = y_pred_proba.shape
-
-        # Initialize output
         prediction_sets = np.zeros((n_samples, n_classes, n_alpha), dtype=bool)
 
         if (estimator.cv == "prefit") or (agg_scores == "mean"):
-            # prediction_sets = np.less_equal(
-            #     (1 - y_pred_proba) - self.quantiles_, EPSILON
-            # )
 
             # For each class, simulate it being the true label and compute RPS
             for q_idx, q in enumerate(self.quantiles_):
@@ -234,19 +230,9 @@ class RankedProbabilityScore(BaseClassificationScore):
                     )
 
         else:
-            pass
-            # TODO: Implement
-            # y_pred_included = np.less_equal(
-            #     (1 - y_pred_proba) - conformity_scores.ravel(), EPSILON
-            # ).sum(axis=2)
-            #
-            # prediction_sets = np.stack(
-            #     [
-            #         np.greater_equal(
-            #             y_pred_included - _alpha * (n - 1), -EPSILON
-            #         )
-            #         for _alpha in alpha_np
-            #     ], axis=2
-            # )
+            raise NotImplementedError(
+                "RPS prediction sets are only supported for prefit or mean "
+                "aggregation."
+            )
 
         return prediction_sets

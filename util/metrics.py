@@ -1,11 +1,13 @@
+"""Evaluation metrics for ordinal classification and conformal prediction."""
+
 import numpy as np
 from dlordinal.metrics import ranked_probability_score, accuracy_off1, mmae, amae
 from mapie.metrics.classification import classification_coverage_score, classification_mean_width_score
 from mapie.metrics.regression import regression_mean_width_score
 from pycalib.metrics import ECE, MCE, conf_ECE, conf_MCE
 from scipy.special import softmax
-from sklearn.metrics import confusion_matrix, cohen_kappa_score, accuracy_score, brier_score_loss
-from typing import Any, Dict, List, Optional, Tuple, Union
+from sklearn.metrics import cohen_kappa_score, accuracy_score, brier_score_loss
+from typing import Dict, List, Union
 
 
 def empirical_risk(y_pred_proba: np.ndarray, loss: str = "l1") -> np.ndarray:

@@ -1,4 +1,6 @@
-from typing import Optional, Callable, Union
+"""Min-CPS conformity score for ordinal conformal prediction."""
+
+from typing import Optional, Callable
 
 import numpy as np
 from mapie.conformity_scores.classification import BaseClassificationScore
@@ -8,9 +10,13 @@ from numpy.typing import NDArray
 
 
 class MinCPS(BaseClassificationScore):
-    """
-    Min-CPS: Provably Minimum-Length Conformal Prediction Sets for Ordinal Classification.
-    Reference: Zhang et al. (2025), arXiv:2511.16845.
+    """Min-CPS: Provably minimum-length conformal prediction sets.
+
+    Reference
+    ---------
+    Zhang, Z., Chen, X., Shi, Y., Ma, L. L., Xu, Z., & Yan, Y. (2026, March).
+    Minimum-Length Conformal Prediction Sets for Ordinal Classification.
+    In Proceedings of the AAAI Conference on Artificial Intelligence (Vol. 40, No. 34, pp. 28662-28670).
     """
 
     def __init__(self) -> None:
@@ -270,36 +276,20 @@ class MinCPS(BaseClassificationScore):
         NDArray
             Array of quantiles with respect to alpha_np.
         """
-        # n = len(conformity_scores)
         n_samples, n_classes, n_alpha = y_pred_proba.shape
 
-        # Initialize output
         prediction_sets = np.zeros((n_samples, n_classes, n_alpha), dtype=bool)
 
         if (estimator.cv == "prefit") or (agg_scores == "mean"):
-            # prediction_sets = np.less_equal(
-            #     (1 - y_pred_proba) - self.quantiles_, EPSILON
-            # )
-
-            # For each class, simulate it being the true label and compute RPS
             for q_idx, q in enumerate(self.quantiles_):
-                prediction_sets[:, :, q_idx] = self.sliding_window_predict_set(y_pred_proba[:, :, q_idx], q, 0)
-
+                prediction_sets[:, :, q_idx] = self.sliding_window_predict_set(
+                    y_pred_proba[:, :, q_idx], q, 0
+                )
 
         else:
-            pass
-            # TODO: Implement
-            # y_pred_included = np.less_equal(
-            #     (1 - y_pred_proba) - conformity_scores.ravel(), EPSILON
-            # ).sum(axis=2)
-            #
-            # prediction_sets = np.stack(
-            #     [
-            #         np.greater_equal(
-            #             y_pred_included - _alpha * (n - 1), -EPSILON
-            #         )
-            #         for _alpha in alpha_np
-            #     ], axis=2
-            # )
+            raise NotImplementedError(
+                "Min-CPS prediction sets are only supported for prefit or "
+                "mean aggregation."
+            )
 
         return prediction_sets

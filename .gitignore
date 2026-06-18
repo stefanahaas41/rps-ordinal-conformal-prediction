@@ -211,6 +211,14 @@ __marimo__/
 
 # Datasets
 TOC-UCO/
+datasets/
+
+# Model checkpoints and training artifacts
+*.pt
+history.json
 
 # JetBrains IDE
 .idea/
+
+*.pdf
+*.csv
