@@ -3,7 +3,6 @@ import random
 import numpy as np
 import pandas as pd
 import torch
-from dlordinal.output_layers import COPOC
 from mapie.classification import SplitConformalClassifier
 from mapie.conformity_scores import LACConformityScore, APSConformityScore
 from sklearn.model_selection import train_test_split
@@ -16,6 +15,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import Subset
 from torchvision import models
 
+from dlordinal.output_layers import COPOC
 from scores.minCPS import MinCPS
 from scores.naive import NaiveCDFScore
 from scores.rps import RankedProbabilityScore
@@ -31,24 +31,33 @@ def filter_conf_levels(conf_levels, n_scores, eps=1e-12):
     return kept, removed, (lower, upper)
 
 
-def run_image_experiment(device, num_classes, data_type, train_data, test_data):
+def run_image_experiment(device, num_classes, data_type, train_data, test_data,
+                         optimizer=None, lr=2e-4, weight_decay=1e-4, batch_size=32,
+                         es_patience=30, lr_patience=10, lr_factor=0.5,
+                         lr_monitor="valid_loss", stratified=True,
+                         use_determinism=True, n_seeds=50,
+                         shuffle=True, aps_randomized=True):
     # --------------------------------------------------------------- determinism -
     SEED = 42
-    random.seed(SEED)
-    np.random.seed(SEED)
-    torch.manual_seed(SEED)
-    torch.cuda.manual_seed_all(SEED)
-    torch.use_deterministic_algorithms(True, warn_only=True)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    if use_determinism:
+        random.seed(SEED)
+        np.random.seed(SEED)
+        torch.manual_seed(SEED)
+        torch.cuda.manual_seed_all(SEED)
+        torch.use_deterministic_algorithms(True, warn_only=True)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if optimizer is None:
+        optimizer = torch.optim.AdamW
 
     result = pd.DataFrame()
     result_cp = pd.DataFrame()
     # CP confidence
     conf = [0.99, 0.98, 0.97, 0.95, 0.92, 0.9, 0.87, 0.85, 0.82, 0.8]
-    seeds = [i for i in range(42, 42 + 50)]
+    seeds = [i for i in range(42, 42 + n_seeds)]
 
     losses = [
         COPOC(),
@@ -70,21 +79,22 @@ def run_image_experiment(device, num_classes, data_type, train_data, test_data):
         estimator = NeuralNetClassifier(
             module=model,
             criterion=loss_function,
-            optimizer=torch.optim.AdamW,
-            lr=2e-4,
-            optimizer__weight_decay=1e-4,
+            optimizer=optimizer,
+            lr=lr,
+            **({"optimizer__weight_decay": weight_decay} if weight_decay > 0 else {}),
             max_epochs=100,
-            batch_size=32,
+            batch_size=batch_size,
             device=device,
-            iterator_train__shuffle=True,
+            iterator_train__shuffle=shuffle,
             iterator_train__num_workers=0,
             iterator_valid__num_workers=0,
-            train_split=ValidSplit(0.1, random_state=SEED, stratified=True),
+            train_split=ValidSplit(0.1, random_state=SEED, stratified=stratified),
             callbacks=[
-                EarlyStopping(patience=30, monitor="valid_loss"),
-                LRScheduler(policy=ReduceLROnPlateau, monitor="valid_loss",
-                            patience=10, factor=0.5, min_lr=1e-6),
-                Checkpoint(monitor="valid_loss_best", load_best=True),
+                EarlyStopping(patience=es_patience, monitor="valid_loss"),
+                LRScheduler(policy=ReduceLROnPlateau, monitor=lr_monitor,
+                            patience=lr_patience, factor=lr_factor, min_lr=1e-6),
+                Checkpoint(monitor="valid_loss_best", load_best=True,
+                           dirname=f"ckpt_{data_type}_{type(loss).__name__}"),
             ],
         )
 
@@ -179,8 +189,11 @@ def run_image_experiment(device, num_classes, data_type, train_data, test_data):
                 random_state=42,
                 prefit=True,
             ).conformalize(X_cal, y_cal)
-            predicted_labels, predicted_sets = mapie_classifier.predict_set(X_test, conformity_score_params={
-                'include_last_label': 'randomized'})
+            if aps_randomized:
+                predicted_labels, predicted_sets = mapie_classifier.predict_set(X_test, conformity_score_params={
+                    'include_last_label': 'randomized'})
+            else:
+                predicted_labels, predicted_sets = mapie_classifier.predict_set(X_test)
             metrics_cp = calculate_metrics_conf_prediction(y_test, predicted_sets, conf)
             df_cp = pd.DataFrame(metrics_cp)
             df_cp.insert(0, "iteration", i)
