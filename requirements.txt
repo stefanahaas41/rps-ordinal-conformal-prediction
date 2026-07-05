@@ -10,3 +10,4 @@ pandas==2.3.2
 pycalib==0.1.0.dev6
 dlordinal==2.6.0
 medmnist==3.0.2
+lightgbm==4.5.0

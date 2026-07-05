@@ -15,10 +15,13 @@ We compare the RPS-based conformity score against several baselines — APS, LAC
 │   └── minCPS.py                       # Min-CPS conformity score (Zhang et al., 2026)
 ├── util/
 │   ├── metrics.py                      # Classification & conformal prediction metrics
-│   ├── tabular_experiments_runner.py   # Tabular experiment pipeline
+│   ├── tabular_experiments_runner.py   # Tabular experiment pipeline (MLP)
+│   ├── tabular_lgbm_experiments_runner.py # Tabular experiment pipeline (LightGBM)
 │   └── image_experiment_runner.py      # Image experiment pipeline
-├── tabular_data_experiments.ipynb      # Tabular experiments notebook
+├── tabular_data_experiments.ipynb      # Tabular experiments notebook (MLP)
+├── tabular_data_experiments_lgbm.ipynb # Tabular experiments notebook (LightGBM)
 ├── eval.ipynb                          # Evaluation & plotting notebook
+├── eval_lgbm.ipynb                     # Evaluation & plotting notebook (LightGBM)
 ├── BACH.ipynb                          # BACH histopathology experiment notebook
 ├── RetinaMNIST.ipynb                   # RetinaMNIST experiment notebook
 ├── FGNet.ipynb                         # FG-NET age estimation experiment notebook
@@ -31,9 +34,19 @@ We compare the RPS-based conformity score against several baselines — APS, LAC
 
 ### Tabular Experiments
 
-Tabular ordinal classification experiments use datasets from the **TOC-UCO** benchmark collection. The pipeline trains a multi-layer perceptron (with and without the COPOC output layer), then evaluates conformal prediction sets under multiple conformity scores (RPS, APS, LAC, OCDF, Min-CPS) across 50 random calibration/test splits.
+Tabular ordinal classification experiments use datasets from the **TOC-UCO** benchmark collection. The pipeline evaluates conformal prediction sets under multiple conformity scores (RPS, APS, LAC, OCDF, Min-CPS) across 50 random calibration/test splits.
+
+#### MLP
+
+Trains a multi-layer perceptron (with and without the COPOC output layer).
 
 **Notebook:** `tabular_data_experiments.ipynb`
+
+#### LightGBM
+
+Trains a LightGBM classifier as an alternative to the MLP pipeline.
+
+**Notebook:** `tabular_data_experiments_lgbm.ipynb`
 
 ### Image Experiments
 
@@ -87,9 +100,10 @@ The TOC-UCO tabular datasets are **not** bundled in this repository. Download th
 
 ## Running Experiments
 
-1. **Tabular:** open `tabular_data_experiments.ipynb` and run all cells.
-2. **Image:** open the corresponding notebook (`BACH.ipynb`, `RetinaMNIST.ipynb`, or `FGNet.ipynb`) and run all cells.
-3. **Evaluation:** open `eval.ipynb` to load result CSVs and reproduce plots.
+1. **Tabular (MLP):** open `tabular_data_experiments.ipynb` and run all cells.
+2. **Tabular (LightGBM):** open `tabular_data_experiments_lgbm.ipynb` and run all cells.
+3. **Image:** open the corresponding notebook (`BACH.ipynb`, `RetinaMNIST.ipynb`, or `FGNet.ipynb`) and run all cells.
+4. **Evaluation:** open `eval.ipynb` or `eval_lgbm.ipynb` to load result CSVs and reproduce plots.
 
 ## Results
 
