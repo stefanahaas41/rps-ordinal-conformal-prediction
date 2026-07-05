@@ -109,6 +109,19 @@ The TOC-UCO tabular datasets are **not** bundled in this repository. Download th
 
 Pre-computed experimental results for the paper can be found in the `results/` folder as CSV files. These include conformal prediction results for all datasets and conformity scores reported in the paper.
 
+## Citation
+
+If you use this code or the RPS conformity score in your research, please cite the paper ([arXiv:2606.24959](https://arxiv.org/abs/2606.24959)):
+
+```bibtex
+@article{haas2026reliable,
+  title={Reliable Conformal Prediction for Ordinal Classification Using the Ranked Probability Score},
+  author={Haas, Stefan and Killmaier, Luca and Javanmardi, Alireza and H{\"u}llermeier, Eyke},
+  journal={arXiv preprint arXiv:2606.24959},
+  year={2026}
+}
+```
+
 ## References
 
 - Epstein, E. S. (1969). A scoring system for probability forecasts of ranked categories. Journal of Applied Meteorology (1962-1982), 8(6), 985-987.
